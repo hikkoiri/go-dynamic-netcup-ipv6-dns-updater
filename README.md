@@ -44,5 +44,41 @@ job for recurring execution. Luckily I already prepared everything for you:
 ````bash
 # this commands were tested on raspbian. when you use another linux distribution, the commands may vary
 
- 
+git clone https://github.com/hikkoiri/go-dynamic-netcup-ipv6-dns-updater.git
+cd go-dynamic-netcup-ipv6-dns-updater
+
+# build the application
+# install go with 'sudo apt install golang-go'
+go build
+
+# update the configuation in update.sh
+nano update.sh
+chmod +x update.sh
+
+# optional - enable logging for cron jobs
+# uncomment following line:
+# # cron.*                          /var/log/cron.log
+sudo nano /etc/rsyslog.conf 
+sudo service rsyslog restart
+
+# to avoid following error: (CRON) info (No MTA installed, discarding output)
+sudo apt-get -y install postfix
+
+# create crontab file (this will run each 5 minutes)
+echo "*/5 * * * * $(pwd)/update.sh >> $(pwd)/cron.log 2>&1\n" >> $(pwd)/crontab
+
+# configure cron
+crontab crontab
+
+# verify cron setup
+crontab -l 
+tail -f  /var/log/cron.log
 ````
+
+Uninstall:
+
+```bash
+crontab -r
+cd ..
+rm -rf go-dynamic-netcup-ipv6-dns-updater
+```
