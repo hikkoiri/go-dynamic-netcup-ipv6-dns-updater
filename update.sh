@@ -1,3 +1,4 @@
+#!/bin/sh
 # your netcup domain
 export DOMAIN=example.org
 
@@ -9,4 +10,5 @@ export APIPASSWORD=abcdefghijklmnooqrstuvwxyz
 # comma separated list of hosts (@ = root, * = wildcard)
 export HOSTS=*,@
 
-./go-dynamic-netcup-ipv6-dns-updater
+BASEDIR=$(dirname $0)
+${BASEDIR}/go-dynamic-netcup-ipv6-dns-updater

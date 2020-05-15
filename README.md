@@ -55,24 +55,18 @@ go build
 nano update.sh
 chmod +x update.sh
 
-# optional - enable logging for cron jobs
-# uncomment following line:
-# # cron.*                          /var/log/cron.log
-sudo nano /etc/rsyslog.conf 
-sudo service rsyslog restart
-
-# to avoid following error: (CRON) info (No MTA installed, discarding output)
-sudo apt-get -y install postfix
-
 # create crontab file (this will run each 5 minutes)
-echo "*/5 * * * * $(pwd)/update.sh >> $(pwd)/cron.log 2>&1\n" >> $(pwd)/crontab
+echo "*/5 * * * * $(pwd)/update.sh >> $(pwd)/cron.log 2>&1" >> $(pwd)/crontab
+# delete logs each month
+echo "0 0 1 * * rm $(pwd)/cron.log" >> $(pwd)/crontab
+
 
 # configure cron
 crontab crontab
 
 # verify cron setup
 crontab -l 
-tail -f  /var/log/cron.log
+tail -f  cron.log
 ````
 
 Uninstall:
