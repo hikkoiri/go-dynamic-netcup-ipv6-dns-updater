@@ -2,6 +2,8 @@
 
 > Disclaimer: This is my very **first** Golang project. So dont be too harsh.
 
+> Successfully tested on Raspberry Pi's.
+
 ## All about this project
 - Update multiple AAAA records for netcup DNS provider in a programmatic way
 - Configuration picked up over env variables
@@ -59,7 +61,6 @@ chmod +x update.sh
 echo "*/5 * * * * $(pwd)/update.sh >> $(pwd)/cron.log 2>&1" >> $(pwd)/crontab
 # delete logs each month
 echo "0 0 1 * * rm $(pwd)/cron.log" >> $(pwd)/crontab
-
 
 # configure cron
 crontab crontab
