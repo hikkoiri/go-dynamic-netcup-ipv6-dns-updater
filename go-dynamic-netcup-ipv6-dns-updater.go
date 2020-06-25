@@ -96,16 +96,24 @@ func updateDNSRecords(hosts []string, apiSessionId string, currentIpV6 string) {
 }
 
 func updateExistingDnsRecord(apiSessionId string, updatedDnsRecord dnsRecord) {
-	dnsRecordTpUpdate := map[string]interface{}{
+	//delete old record
+
+	oldRecordToDelete := map[string]interface{}{
 		"id":           updatedDnsRecord.Id,
 		"hostname":     updatedDnsRecord.Hostname,
 		"type":         updatedDnsRecord.Type,
-		"priority":     updatedDnsRecord.Priority,
 		"destination":  updatedDnsRecord.Destination,
-		"deleterecord": updatedDnsRecord.Deleterecord,
-		"state":        updatedDnsRecord.State,
+		"deleterecord": true,
 	}
-	createNewDnsRecords(apiSessionId,dnsRecordTpUpdate)
+	createNewDnsRecords(apiSessionId,oldRecordToDelete)
+
+	//create new one
+	dnsRecordToUpdate := map[string]interface{}{
+		"hostname":     updatedDnsRecord.Hostname,
+		"type":         updatedDnsRecord.Type,
+		"destination":  updatedDnsRecord.Destination,
+	}
+	createNewDnsRecords(apiSessionId,dnsRecordToUpdate)
 }
 
 func createNewDnsRecords(apiSessionId string, newDnsRecord map[string]interface{}) {
