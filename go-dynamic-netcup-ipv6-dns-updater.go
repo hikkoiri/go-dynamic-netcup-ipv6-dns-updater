@@ -55,13 +55,12 @@ func updateDNSRecords(hosts []string, apiSessionId string, currentIpV6 string) {
 
 		//check if record exists
 		doesRecordExist := false
-		var foundDnsRecord dnsRecord
+		var foundDnsRecords []dnsRecord
 		for _, extractedDnsRecord := range dnsRecords {
 			if host == extractedDnsRecord.Hostname {
 				if extractedDnsRecord.Type == "AAAA" {
 					doesRecordExist = true
-					foundDnsRecord = extractedDnsRecord
-					break
+					foundDnsRecords = append(foundDnsRecords, extractedDnsRecord)
 				}
 			}
 		}
@@ -69,20 +68,43 @@ func updateDNSRecords(hosts []string, apiSessionId string, currentIpV6 string) {
 
 
 		if doesRecordExist {
-			// check if retrieved ipv6 is similar to current one
-			if foundDnsRecord.Destination == currentIpV6 {
-				fmt.Println("DNS record already exist. destination did not change.")
-				//nice, nothing to do
+
+			//if multiple records exist (for some unknown reason) -> delete all and create a new one
+			if len(foundDnsRecords) > 1 {
+				fmt.Println("Multiple DNS record exist. Deleting all.")
+				//delete all records
+				for _, foundDnsRecord := range foundDnsRecords {
+					deleteExistingDnsRecord(apiSessionId , foundDnsRecord)
+				}
+				//create new ipv6 record
+				dnsRecordCandidate := map[string]interface{}{
+					"hostname":    host,
+					"type":        "AAAA",
+					"destination": currentIpV6,
+				}
+
+				fmt.Println("DNS record does not exist. Creating one.")
+				createNewDnsRecordsInternal(apiSessionId, dnsRecordCandidate)
+
 			} else {
-				fmt.Println("DNS record already exist. Updating", foundDnsRecord.Destination, "to", currentIpV6)
 
-				foundDnsRecord.Destination = currentIpV6
+				foundDnsRecord := foundDnsRecords[0]
 
-				updateExistingDnsRecord(apiSessionId, foundDnsRecord)
+				// check if retrieved ipv6 is similar to current one
+				if foundDnsRecord.Destination == currentIpV6 {
+					fmt.Println("DNS record already exist. destination did not change.")
+					//nice, nothing to do
+				} else {
+
+					fmt.Println("DNS record already exist. Updating", foundDnsRecord.Destination, "to", currentIpV6)
+
+					foundDnsRecord.Destination = currentIpV6
+
+					updateExistingDnsRecord(apiSessionId, foundDnsRecord)
+				}
 			}
 		} else {
 			//create new ipv6 record
-
 			dnsRecordCandidate := map[string]interface{}{
 				"hostname":    host,
 				"type":        "AAAA",
@@ -90,33 +112,42 @@ func updateDNSRecords(hosts []string, apiSessionId string, currentIpV6 string) {
 			}
 
 			fmt.Println("DNS record does not exist. Creating one.")
-			createNewDnsRecords(apiSessionId, dnsRecordCandidate)
+			createNewDnsRecordsInternal(apiSessionId, dnsRecordCandidate)
 		}
 	}
 }
 
-func updateExistingDnsRecord(apiSessionId string, updatedDnsRecord dnsRecord) {
-	//delete old record
+func deleteExistingDnsRecord(apiSessionId string, updatedDnsRecord dnsRecord) {
 
-	oldRecordToDelete := map[string]interface{}{
+	recordToDelete := map[string]interface{}{
 		"id":           updatedDnsRecord.Id,
 		"hostname":     updatedDnsRecord.Hostname,
 		"type":         updatedDnsRecord.Type,
 		"destination":  updatedDnsRecord.Destination,
 		"deleterecord": true,
 	}
-	createNewDnsRecords(apiSessionId,oldRecordToDelete)
+	createNewDnsRecordsInternal(apiSessionId,recordToDelete)
+}
 
+func updateExistingDnsRecord(apiSessionId string, updatedDnsRecord dnsRecord) {
+
+	deleteExistingDnsRecord(apiSessionId,updatedDnsRecord)
+	createNewDnsRecords(apiSessionId,updatedDnsRecord)
+}
+
+
+func createNewDnsRecords(apiSessionId string, updatedDnsRecord dnsRecord) {
 	//create new one
 	dnsRecordToUpdate := map[string]interface{}{
 		"hostname":     updatedDnsRecord.Hostname,
 		"type":         updatedDnsRecord.Type,
 		"destination":  updatedDnsRecord.Destination,
 	}
-	createNewDnsRecords(apiSessionId,dnsRecordToUpdate)
+	createNewDnsRecordsInternal(apiSessionId,dnsRecordToUpdate)
 }
 
-func createNewDnsRecords(apiSessionId string, newDnsRecord map[string]interface{}) {
+
+func createNewDnsRecordsInternal(apiSessionId string, newDnsRecord map[string]interface{}) {
 	requestBody := map[string]interface{}{
 		"action": "updateDnsRecords",
 		"param": map[string]interface{}{
